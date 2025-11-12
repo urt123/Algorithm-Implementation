@@ -1,0 +1,79 @@
+#include <iostream>
+#include <cmath>
+#include <GL/glut.h>
+
+// Rectangle corner points (using original variable names)
+float lineX1 = 100.0f, lineY1 = 100.0f;
+float lineX2 = 200.0f, lineY2 = 100.0f;
+float lineX3 = 200.0f, lineY3 = 150.0f;
+float lineX4 = 100.0f, lineY4 = 150.0f;
+
+float x_rc = 150.0f;
+float y_rc = 125.0f;
+
+float angleDegrees = 45.0f;
+
+// Rotated points
+float lineX1Rotated, lineY1Rotated;
+float lineX2Rotated, lineY2Rotated;
+float lineX3Rotated, lineY3Rotated;
+float lineX4Rotated, lineY4Rotated;
+
+void rotatePoint(float x, float y, float x_rc, float y_rc, float angleDegrees,
+                float& x_prime, float& y_prime) {
+    float angleRadians = angleDegrees * M_PI / 180.0f;
+
+    x_prime = (x - x_rc) * (float)cos(angleRadians) - (y - y_rc) * (float)sin(angleRadians) + x_rc;
+    y_prime = (x - x_rc) * (float)sin(angleRadians) + (y - y_rc) * (float)cos(angleRadians) + y_rc;
+}
+
+void display() {
+    glClear(GL_COLOR_BUFFER_BIT);
+    glColor3f(1.0f, 1.0f, 1.0f); // White for original
+
+    // Draw original rectangle
+    glBegin(GL_QUADS);
+    glVertex2f(lineX1, lineY1);
+    glVertex2f(lineX2, lineY2);
+    glVertex2f(lineX3, lineY3);
+    glVertex2f(lineX4, lineY4);
+    glEnd();
+
+    // Rotate each point
+    rotatePoint(lineX1, lineY1, x_rc, y_rc, angleDegrees, lineX1Rotated, lineY1Rotated);
+    rotatePoint(lineX2, lineY2, x_rc, y_rc, angleDegrees, lineX2Rotated, lineY2Rotated);
+    rotatePoint(lineX3, lineY3, x_rc, y_rc, angleDegrees, lineX3Rotated, lineY3Rotated);
+    rotatePoint(lineX4, lineY4, x_rc, y_rc, angleDegrees, lineX4Rotated, lineY4Rotated);
+
+    // Draw rotated rectangle
+    glColor3f(1.0f, 0.0f, 0.0f); // Red for rotated
+    glBegin(GL_QUADS);
+    glVertex2f(lineX1Rotated, lineY1Rotated);
+    glVertex2f(lineX2Rotated, lineY2Rotated);
+    glVertex2f(lineX3Rotated, lineY3Rotated);
+    glVertex2f(lineX4Rotated, lineY4Rotated);
+    glEnd();
+
+    glutSwapBuffers();
+}
+
+void init(void) {
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluOrtho2D(0, 500, 0, 500);
+    glMatrixMode(GL_MODELVIEW);
+}
+
+int main(int argc, char** argv) {
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
+    glutInitWindowSize(500, 500);
+    glutCreateWindow("Rectangle Rotation");
+
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    init();
+    glutDisplayFunc(display);
+
+    glutMainLoop();
+    return 0;
+}
