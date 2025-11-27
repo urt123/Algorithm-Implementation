@@ -1,0 +1,136 @@
+#include <GL/glut.h>
+#include <iostream>
+#include <vector>
+using namespace std;
+struct Point {
+float x, y;
+};
+// Subject polygon (the polygon to clip)
+vector<Point> subjectPolygon = {
+{70, 150}, {100, 250}, {200, 300}, {250, 250}, {200, 100}
+};
+// Clipping rectangle coordinates (fixed)
+float clipLeft = 100;
+float clipRight = 200;
+float clipBottom = 100;
+float clipTop = 200;
+// Enum for edges of clipping rectangle
+enum Edge { LEFT, RIGHT, BOTTOM, TOP };
+// Check if point is inside clipping edge
+bool isInside(Point p, Edge edge) {
+if (edge == LEFT) return p.x >= clipLeft;
+if (edge == RIGHT) return p.x <= clipRight;
+if (edge == BOTTOM) return p.y >= clipBottom;
+if (edge == TOP) return p.y <= clipTop;
+return false;
+}
+// Find intersection of polygon edge with clipping edge
+Point getIntersection(Point p1, Point p2, Edge edge) {
+Point inter;
+// For each edge, we fix one coordinate and calculate the other
+switch (edge) {
+case LEFT:
+inter.x = clipLeft;
+// Line is vertical for intersection; avoid division by zero
+if (p2.x != p1.x)
+inter.y = p1.y + (p2.y - p1.y) * (clipLeft - p1.x) / (p2.x - p1.x);
+else
+inter.y = p1.y;
+break;
+case RIGHT:
+inter.x = clipRight;
+if (p2.x != p1.x)
+inter.y = p1.y + (p2.y - p1.y) * (clipRight - p1.x) / (p2.x - p1.x);
+else
+inter.y = p1.y;
+break;
+case BOTTOM:
+inter.y = clipBottom;
+if (p2.y != p1.y)
+inter.x = p1.x + (p2.x - p1.x) * (clipBottom - p1.y) / (p2.y - p1.y);
+else
+inter.x = p1.x;
+break;
+case TOP:
+inter.y = clipTop;
+if (p2.y != p1.y)
+inter.x = p1.x + (p2.x - p1.x) * (clipTop - p1.y) / (p2.y - p1.y);
+else
+inter.x = p1.x;
+break;
+}
+return inter;
+}
+// Clip polygon against one edge
+vector<Point> clipPolygonEdge(vector<Point> inputPoly, Edge edge) {
+vector<Point> outputPoly;
+int n = inputPoly.size();
+for (int i = 0; i < n; i++) {
+Point curr = inputPoly[i];
+Point prev = inputPoly[(i + n - 1) % n]; // Previous vertex
+bool currInside = isInside(curr, edge);
+bool prevInside = isInside(prev, edge);
+// 4 cases:
+if (prevInside && currInside) {
+// Both inside — add current/DESTINATION point
+outputPoly.push_back(curr);
+} else if (prevInside && !currInside) {
+// Edge goes from inside to outside — add intersection point
+outputPoly.push_back(getIntersection(prev, curr, edge));
+} else if (!prevInside && currInside) {
+// Edge goes from outside to inside — add intersection and current point
+outputPoly.push_back(getIntersection(prev, curr, edge));
+outputPoly.push_back(curr);
+}
+// Both outside — add nothing
+}
+return outputPoly;
+}
+// Apply clipping against all edges
+vector<Point> sutherlandHodgmanClip(vector<Point> subjectPoly) {
+vector<Point> clippedPoly = subjectPoly;
+clippedPoly = clipPolygonEdge(clippedPoly, LEFT);
+clippedPoly = clipPolygonEdge(clippedPoly, RIGHT);
+clippedPoly = clipPolygonEdge(clippedPoly, BOTTOM);
+clippedPoly = clipPolygonEdge(clippedPoly, TOP);
+return clippedPoly;
+}
+// Draw polygon using OpenGL
+void drawPolygon(vector<Point> poly, float r, float g, float b) {
+glColor3f(r, g, b);
+glBegin(GL_LINE_LOOP);
+for (auto &p : poly) {
+glVertex2f(p.x, p.y);
+}
+glEnd();
+}
+void display() {
+glClear(GL_COLOR_BUFFER_BIT);
+// Draw original polygon in blue
+drawPolygon(subjectPolygon, 0, 0, 1);
+// Draw clipping window in green (rectangle)
+vector<Point> clipRect = {
+{clipLeft, clipBottom},
+{clipLeft, clipTop},
+{clipRight, clipTop},
+{clipRight, clipBottom}
+};
+drawPolygon(clipRect, 0, 1, 0);
+// Clip polygon and result in red
+vector<Point> clippedPoly = sutherlandHodgmanClip(subjectPolygon);
+drawPolygon(clippedPoly, 1, 0, 0);
+glFlush();
+}
+void init() {
+glClearColor(1, 1, 1, 1); // white er jnno
+gluOrtho2D(0, 400, 0, 400);
+}
+int main(int argc, char** argv) {
+glutInit(&argc, argv);
+glutInitWindowSize(600, 600);
+glutCreateWindow("Simple Sutherland-Hodgman Clipping");
+glutDisplayFunc(display);
+init();
+glutMainLoop();
+return 0;
+}
