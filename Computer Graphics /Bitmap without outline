@@ -1,0 +1,71 @@
+#include <GL/glut.h>
+using namespace std;
+
+const int pixelSize = 5;
+const int screenWidth = 600, screenHeight = 400;
+const int charWidth = 7, charHeight = 7;
+
+void drawPixel(int x, int y) {
+    glBegin(GL_QUADS);
+    glVertex2i(x * pixelSize, y * pixelSize);
+    glVertex2i((x + 1) * pixelSize, y * pixelSize);
+    glVertex2i((x + 1) * pixelSize, (y + 1) * pixelSize);
+    glVertex2i(x * pixelSize, (y + 1) * pixelSize);
+    glEnd();
+}
+
+void drawDynamicBitmapA(int startX, int startY) {
+    for (int y = 0; y < charHeight; y++) {
+        for (int x = 0; x < charWidth; x++) {
+            if (x == 0 || x == charWidth - 1 || y == charHeight / 2 || (y == 0 && x > 0 && x < charWidth - 1)) {
+                drawPixel(startX + x, startY - y);
+            }
+        }
+    }
+}
+// 'Z' অক্ষর আঁকার ফাংশন
+//*void drawDynamicBitmapZ(int startX, int startY) {
+    //for (int y = 0; y < charHeight; y++) {
+       // for (int x = 0; x < charWidth; x++) {
+            // তিনটি অংশ: উপরের লাইন, নিচের লাইন, এবং ডায়াগোনাল
+           // if (y == 0 || y == charHeight - 1 || x == (charWidth - 1 - y)) {
+               // drawPixel(startX + x, startY - y);
+            //} } }}///****
+//"P" draw
+//void drawDynamicBitmapP(int startX, int startY) {
+  //  for (int y = 0; y < charHeight; y++) {
+   //     for (int x = 0; x < charWidth; x++) {
+  //          if (
+   //             x == 0 || // বাম দিকের লাইন
+    //            (y == charHeight - 1 && x < charWidth - 1) || // উপর দিকের লাইন
+   //             (y == charHeight / 2 && x < charWidth - 1) || // মাঝখানের লাইন
+    //            (x == charWidth - 1 && y > charHeight / 2 && y < charHeight - 1) // ডান পাশের খাঁজ
+    //        ) {
+              //  drawPixel(startX + x, startY - y);    // }  }    }}
+
+
+void display() {
+    glClear(GL_COLOR_BUFFER_BIT);
+    glColor3f(1.0, 1.0, 1.0);
+    drawDynamicBitmapA(5, 10);
+    glFlush();
+}
+
+void init() {
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluOrtho2D(0, screenWidth, 0, screenHeight);
+    glClearColor(0.0, 0.0, 0.0, 1.0);
+    glColor3f(1.0, 1.0, 1.0);
+}
+
+int main(int argc, char** argv) {
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
+    glutInitWindowSize(screenWidth, screenHeight);
+    glutCreateWindow("Bitmap Method ");
+    init();
+    glutDisplayFunc(display);
+    glutMainLoop();
+    return 0;
+}
